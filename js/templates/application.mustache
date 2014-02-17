@@ -1,0 +1,20 @@
+<div class="message-container"></div>
+
+<div class="content-container">
+
+  <form class="location-search-form">
+    <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address" />
+    <button type="submit" on-tap="addressSearch">Search</button>
+    <button type="submit" on-tap="geolocateSearch">Geolocation</button>
+  </form>
+
+  <div id="snow-emergency-map"></div>
+
+</div>
+
+<div class="footnote-container">
+  <div class="footnote">
+    <p>Some code, techniques, and data on <a href="https://github.com/zzolo/minnpost-snow-emergency" target="_blank">Github</a>.</p>
+
+  </div>
+</div>
