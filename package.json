@@ -12,8 +12,7 @@
     "name": "MinnPost",
     "email": "data@minnpost.com"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-concat": "~0.2.0",
@@ -28,6 +27,7 @@
     "grunt-contrib-connect": "~0.3.0",
     "grunt-contrib-compass": "~0.5.0",
     "grunt-contrib-requirejs": "~0.4.0",
-    "grunt-contrib-cssmin": "~0.7.0"
+    "grunt-contrib-cssmin": "~0.7.0",
+    "grunt-text-replace": "~0.3.11"
   }
 }
