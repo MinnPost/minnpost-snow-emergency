@@ -1,14 +1,54 @@
 <div class="message-container"></div>
 
 <div class="content-container">
+  {{^isSnowEmergency}}
+    <h3>There is no snow emergency</h3>
+  {{/isSnowEmergency}}
 
-  <form class="location-search-form">
-    <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address" />
-    <button type="submit" on-tap="addressSearch">Search</button>
-    <button type="submit" on-tap="geolocateSearch">Geolocation</button>
-  </form>
+  {{#isSnowEmergency}}
+    <div class="narrative-input">
+      <h3>It is Day {{ snowEmergencyDay }} of the Snow Emergency</h3>
 
-  <div id="snow-emergency-map"></div>
+      <div class="snow-emergency-day-status">
+        {{#(snowEmergencyDay === 1)}}
+          <p>That means from 9PM to 8AM (overnight), you cannot park on streets that are marked as Snow Emergency routes.  These are routes with specific signs or blue street signs.</p>
+        {{/()}}
+
+        {{#(snowEmergencyDay === 2)}}
+          <p>That means from 8AM to 8PM, you cannot park on the even side of the street or parkways on non-Snow Emergency routes.  The even side of the street is most often the north and west sides of streets.</p>
+        {{/()}}
+
+        {{#(snowEmergencyDay === 3)}}
+          <p>That means from 8AM to 8PM, you cannot park on the odd side of the street  on non-Snow Emergency routes.  The odd side of the street is most often the south and east sides of streets.</p>
+        {{/()}}
+      </div>
+
+      <form proxy-submit="formSubmit" class="location-search-form">
+        <p>Let us know where you are and we can see if you are safe to park.</p>
+        <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address" />
+        <button type="submit" on-tap="addressSearch">Search</button>
+        <button type="submit" on-tap="geolocateSearch">Geolocation</button>
+      </form>
+
+      <div class="location-status">
+        {{#(isLoading === true)}}
+          {{>loading}}
+        {{/())}}
+
+        {{#(nearParking !== undefined)}}
+          {{#nearParking}}
+            <p>Looks like you shouldn't park there.  Check the map to be sure.</p>
+          {{/nearParking}}
+
+          {{^nearParking}}
+            <p>Looks like you are clear to park here.  Check the map to be sure.</p>
+          {{/nearParking}}
+        {{/()}}
+      </div>
+    </div>
+
+    <div id="snow-emergency-map"></div>
+  {{/isSnowEmergency}}
 
 </div>
 

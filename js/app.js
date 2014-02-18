@@ -64,18 +64,19 @@ define('minnpost-snow-emergency', [
     // Start function
     start: function() {
       var thisApp = this;
+      this.data = {};
 
-      // Determine day
-      this.snowEmergencyDay = 2;
-      this.isSnowEmergency = true;
+      // Determine day and some defaults
+      this.data.snowEmergencyDay = 2;
+      this.data.isSnowEmergency = true;
+      this.data.isLoading = false;
+      this.data.nearParking = undefined;
 
       // Create main application view
       this.mainView = new Ractive({
         el: this.$el,
         template: tApplication,
-        data: {
-
-        },
+        data: this.data,
         partials: {
           loading: tLoading
         }
@@ -98,35 +99,52 @@ define('minnpost-snow-emergency', [
       });
 
       // Ensure regular form submission won't happen
-      this.$el.find('form').on('submit', function(e) {
-        e.preventDefault();
+      this.mainView.on('formSubmit', function(e) {
+        e.original.preventDefault();
+        thisApp.searchAddress(this.get('address'));
       });
 
       // Address search
       this.mainView.on('addressSearch', function(e) {
         e.original.preventDefault();
-        var address = this.get('address');
-
-        if (address) {
-          $.getJSON(thisApp.options.mapQuestQuery.replace('[[[ADDRESS]]]', address), function(response) {
-            var latlng;
-
-            if (_.size(response.results[0].locations) > 0 &&
-              _.isObject(response.results[0].locations[0].latLng)) {
-              latlng = response.results[0].locations[0].latLng;
-              thisApp.closestRoutes(latlng.lat, latlng.lng);
-            }
-          });
-        }
+        thisApp.searchAddress(this.get('address'));
       });
 
       // Geolocation
       this.mainView.on('geolocateSearch', function(e) {
         e.original.preventDefault();
+
+        // Reset answer view
+        this.set('isLoading', true);
+        this.set('nearParking', undefined);
+
+        // Use geolocation
         navigator.geolocation.getCurrentPosition(function(position) {
           thisApp.closestRoutes(position.coords.latitude, position.coords.longitude);
         });
       });
+    },
+
+    // Search address
+    searchAddress: function(address) {
+      var thisApp = this;
+
+      if (address) {
+        // Reset answer view
+        this.mainView.set('isLoading', true);
+        this.mainView.set('nearParking', undefined);
+
+        // Geocode address
+        $.getJSON(this.options.mapQuestQuery.replace('[[[ADDRESS]]]', address), function(response) {
+          var latlng;
+
+          if (_.size(response.results[0].locations) > 0 &&
+            _.isObject(response.results[0].locations[0].latLng)) {
+            latlng = response.results[0].locations[0].latLng;
+            thisApp.closestRoutes(latlng.lat, latlng.lng);
+          }
+        });
+      }
     },
 
     // Handle lat lon and get closest routes
@@ -141,7 +159,7 @@ define('minnpost-snow-emergency', [
       this.map.setView([lat, lon], 17);
 
       // Make query with lat/lon
-      SQL = 'SELECT * FROM snow_routes WHERE day' + this.snowEmergencyDay.toString() + ' = 0 ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) LIMIT 20';
+      SQL = 'SELECT * FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) LIMIT 25';
 
       // Query CartoDB
       $.getJSON('http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=' + SQL + '', function(data) {
@@ -151,27 +169,41 @@ define('minnpost-snow-emergency', [
 
     // Show routes
     renderRoutes: function(geoJSON) {
+      var thisApp = this;
+
+      // Remove any existing layers
       if (_.isObject(this.routeLayer)) {
         this.map.removeLayer(this.routeLayer);
         this.map.removeLayer(this.locationLayer);
       }
 
+      // Use the closest one to suggest what is close
+      this.mainView.set('isLoading', false);
+      this.mainView.set('nearParking', undefined);
+      this.data.closestRoute = _.clone(geoJSON.features[0]);
+      this.mainView.set('nearParking', (this.data.closestRoute.properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false);
+
+      // Filter out only dont park places
+      geoJSON.features = _.filter(geoJSON.features, function(f, fi) {
+        if (f.properties['day' + thisApp.data.snowEmergencyDay.toString()] === 0) {
+          return true;
+        }
+        return false;
+      });
+
       // Make layer and style
       this.routeLayer = new L.geoJson(geoJSON, {
         style: function(feature) {
-          var color = '#B21A10';
-
-          //color = (feature.properties.day1 === 0) ? '#2167AB' : color;
-          //color = (feature.properties.day2 === 0) ? '#6B0FB2' : color;
-          //color = (feature.properties.day3 === 0) ? '#FF5C00' : color;
-
           return {
-            fillColor: color,
-            color: color,
-            weight: 3,
-            opacity: 0.55,
+            fillColor: thisApp.options.colors.dontPark,
+            color: thisApp.options.colors.dontPark,
+            weight: 1,
+            opacity: 0.5,
             fillOpacity: 0.75
           };
+        },
+        onEachFeature: function(feature, layer) {
+          layer.bindPopup('<p>Do not park here.</p>');
         }
       });
 
@@ -188,14 +220,19 @@ define('minnpost-snow-emergency', [
       // Add layers
       this.map.addLayer(this.routeLayer);
       this.map.addLayer(this.locationLayer);
-      this.map.fitBounds(this.routeLayer.getBounds());
     },
 
     // Default options
     defaultOptions: {
       projectName: 'minnpost-snow-emergency',
       // Please do not steal
-      mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]'
+      mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      colors: {
+        day1: '#2167AB',
+        day2: '#6B0FB2',
+        day3: '##FF5C00',
+        dontPark: '#B21A10'
+      }
     }
   });
 
