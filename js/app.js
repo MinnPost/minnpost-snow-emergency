@@ -137,7 +137,9 @@ define('minnpost-snow-emergency', [
       // Initialize map
       this.map = new L.Map('snow-emergency-map', {
         center: [44.970753517451946, -93.26185335000002],
-        zoom: 12
+        zoom: 12,
+        minZoom: 10,
+        maxZoom: 17
       });
       L.tileLayer('//{s}.tiles.mapbox.com/v3/minnpost.map-wi88b700/{z}/{x}/{y}.png').addTo(this.map);
 
