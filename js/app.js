@@ -163,8 +163,8 @@ define('minnpost-snow-emergency', [
         // timeout: error.code === 3
         thisApp.issue('There was an error trying to find your position.');
       }, {
-        maximumAge: 1200,
-        enableHighAccuracy: true
+        maximumAge: 1200
+        //enableHighAccuracy: true
       });
     },
 
