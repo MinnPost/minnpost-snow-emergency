@@ -118,17 +118,10 @@ define('minnpost-snow-emergency', [
       // Geolocation
       this.mainView.on('geolocateSearch', function(e) {
         e.original.preventDefault();
-        thisApp.resetSearch();
 
-        // Use geolocation
-        navigator.geolocation.getCurrentPosition(function(position) {
-          thisApp.closestRoutes(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
-        }, function(error) {
-          // error.code === 3
-          thisApp.issue('There was an error trying to find your position.');
-        }, {
-          // Options
-        });
+        if (!thisApp.watchID) {
+          thisApp.geolocate();
+        }
       });
     },
 
@@ -152,7 +145,24 @@ define('minnpost-snow-emergency', [
         // Something
       })
       .on('error', function() {
-        // Log error
+        this.issue('There was an error loading the snow route information.');
+      });
+    },
+
+    // Geolocate
+    geolocate: function() {
+      var thisApp = this;
+      var id;
+      this.resetSearch();
+
+      // Use geolocation
+      this.watchID = navigator.geolocation.watchPosition(function(position) {
+        thisApp.closestRoutes(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+      }, function(error) {
+        // timeout: error.code === 3
+        thisApp.issue('There was an error trying to find your position.');
+      }, {
+        maximumAge: 1200
       });
     },
 
@@ -163,6 +173,12 @@ define('minnpost-snow-emergency', [
       if (address) {
         thisApp.resetSearch();
 
+        // Turn off any geocode watching
+        if (this.watchID) {
+          navigator.geolocation.clearWatch(this.watchID);
+          this.watchID = undefined;
+        }
+
         // Geocode address
         $.getJSON(this.options.mapQuestQuery.replace('[[[ADDRESS]]]', address), function(response) {
           var latlng;
@@ -172,12 +188,15 @@ define('minnpost-snow-emergency', [
             latlng = response.results[0].locations[0].latLng;
             thisApp.closestRoutes(latlng.lat, latlng.lng);
           }
+          else {
+            this.issue('That address could not be found, please try another or more specific one.');
+          }
         });
       }
     },
 
     // Handle lat lon and get closest routes
-    closestRoutes: function(lat, lon) {
+    closestRoutes: function(lat, lon, meters) {
       var thisApp = this;
       var SQL;
 
@@ -197,17 +216,19 @@ define('minnpost-snow-emergency', [
       this.map.setView([lat, lon], 17);
 
       // Make query with lat/lon
-      SQL = 'SELECT * FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) LIMIT 50';
+      SQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) AS distance  FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) ASC LIMIT 50';
 
       // Query CartoDB
       $.getJSON('http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=' + SQL + '', function(data) {
-        thisApp.renderRoutes(data);
+        thisApp.renderRoutes(data, meters);
       });
     },
 
     // Show routes
-    renderRoutes: function(geoJSON) {
+    renderRoutes: function(geoJSON, meters) {
       var thisApp = this;
+      meters = meters || 15;
+      this.mainView.set('messages', '');
 
       // Remove any existing layers
       if (_.isObject(this.routeLayer)) {
@@ -218,8 +239,7 @@ define('minnpost-snow-emergency', [
       // Use the closest one to suggest what is close
       this.mainView.set('isLoading', false);
       this.mainView.set('nearParking', undefined);
-      this.data.closestRoute = _.clone(geoJSON.features[0]);
-      this.mainView.set('nearParking', (this.data.closestRoute.properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false);
+      this.mainView.set('nearParking', (_.first(geoJSON.features).properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false);
 
       // Filter out only dont park places
       geoJSON.features = _.filter(geoJSON.features, function(f, fi) {
@@ -248,7 +268,7 @@ define('minnpost-snow-emergency', [
         radius: 8,
         fillColor: '#10B21A',
         color: '#10B21A',
-        weight: 10,
+        weight: meters / 5,
         opacity: 0.45,
         fillOpacity: 0.85,
         clickable: false

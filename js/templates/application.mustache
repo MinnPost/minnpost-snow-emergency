@@ -36,7 +36,7 @@
 
     <form proxy-submit="formSubmit" class="location-search-form">
       <p>Search for an address to see parking restrictions near you.</p>
-      <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address" />
+      <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address, ex. 900 6th Ave SE, Minneapolis, MN 55414" />
       <button type="submit" title="Search address" on-tap="addressSearch">Search</button>
       <button type="submit" class="geolocation-button" title="Use the location of your device" on-tap="geolocateSearch"></button>
     </form>
@@ -59,7 +59,7 @@
           <p>Looks like you are clear to park here.  Check the map to be sure.</p>
         {{/nearParking}}
 
-        <div class="note">Make sure to follow any other parking signs.</div>
+        <div class="note">And follow any other posted parking signs.</div>
       {{/()}}
     </div>
 
