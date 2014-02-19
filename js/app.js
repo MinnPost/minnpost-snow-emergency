@@ -132,7 +132,8 @@ define('minnpost-snow-emergency', [
         center: [44.970753517451946, -93.26185335000002],
         zoom: 12,
         minZoom: 10,
-        maxZoom: 17
+        maxZoom: 17,
+        scrollWheelZoom: false
       });
       L.tileLayer('//{s}.tiles.mapbox.com/v3/minnpost.map-wi88b700/{z}/{x}/{y}.png').addTo(this.map);
 
@@ -227,6 +228,8 @@ define('minnpost-snow-emergency', [
     // Show routes
     renderRoutes: function(geoJSON, meters) {
       var thisApp = this;
+      var cloneJSON = _.deepClone(geoJSON);
+      var nearParking;
       meters = meters || 15;
       this.mainView.set('messages', '');
 
@@ -238,8 +241,11 @@ define('minnpost-snow-emergency', [
 
       // Use the closest one to suggest what is close
       this.mainView.set('isLoading', false);
-      this.mainView.set('nearParking', undefined);
-      this.mainView.set('nearParking', (_.first(geoJSON.features).properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false);
+      cloneJSON.features = _.sortBy(cloneJSON.features, function(f) {
+        return f.properties.distance * -1;
+      });
+      nearParking = (_.first(cloneJSON.features).properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false;
+      this.mainView.set('nearParking', nearParking);
 
       // Filter out only dont park places
       geoJSON.features = _.filter(geoJSON.features, function(f, fi) {
@@ -268,8 +274,8 @@ define('minnpost-snow-emergency', [
         radius: 8,
         fillColor: '#10B21A',
         color: '#10B21A',
-        weight: meters / 5,
-        opacity: 0.45,
+        weight: meters / 3,
+        opacity: 0.25,
         fillOpacity: 0.85,
         clickable: false
       });
@@ -277,6 +283,14 @@ define('minnpost-snow-emergency', [
       // Add layers
       this.map.addLayer(this.routeLayer);
       this.map.addLayer(this.locationLayer);
+
+      // Scoll page.  Scroll if not currently watching
+      if (!this.watchID || !this.scrolled) {
+        $('html, body').stop().animate({
+          scrollTop: this.$el.find('.focus-found').offset().top - 15
+        }, 750);
+        this.scrolled = (this.watchID) ? true : false;
+      }
     },
 
     // Reset search stuff

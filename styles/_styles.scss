@@ -166,6 +166,40 @@ body .node-unpublished {
   }
 
   // Breakpoints
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 420px) {
+    .narrative {
+      font-size: .75em;
+    }
+
+    #snow-emergency-map {
+      width: 90%;
+      margin: 0 auto;
+      height: 35em;
+    }
+
+    .location-search-form {
+      p {
+        font-size: .75em;
+        margin-bottom: .5em;
+        line-height: 1.15em;
+      }
+
+      .address-input {
+        width: 50%;
+        margin-right: 2px;
+      }
+
+      .address-button {
+        width: 20%;
+        margin-right: 2px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+
+      .geolocation-button {
+        width: 20%;
+        margin-right: 0;
+      }
+    }
   }
 }

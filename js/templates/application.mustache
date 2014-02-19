@@ -4,7 +4,7 @@
   {{^isSnowEmergency}}
     <div class="narrative">
       <h3>There is no snow emergency at the moment</h3>
-      <p>For testing purposes, set a snow emergency day:
+      <p>To plan ahead, set a snow emergency day:
         <select value="{{ chooseDay }}">
           <option value="">&lt;pick a day&gt;</option>
           <option value="1">Day 1</option>
@@ -35,13 +35,13 @@
     </div>
 
     <form proxy-submit="formSubmit" class="location-search-form">
-      <p>Search for an address to see parking restrictions near you.</p>
+      <p>Search for an address or use your location to see parking restrictions near you.</p>
       <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address, ex. 900 6th Ave SE, Minneapolis, MN 55414" />
-      <button type="submit" title="Search address" on-tap="addressSearch">Search</button>
+      <button type="submit" class="address-button" title="Search address" on-tap="addressSearch">Search</button>
       <button type="submit" class="geolocation-button" title="Use the location of your device" on-tap="geolocateSearch"></button>
     </form>
 
-    <div class="narrative">
+    <div class="narrative focus-found">
       {{#(isLoading === true)}}
         {{>loading}}
       {{/())}}
@@ -70,7 +70,7 @@
 
 <div class="footnote-container">
   <div class="footnote">
-    <p>Some map data &copy; OpenStreetMap contributors; licensed under the <a href="http://www.openstreetmap.org/copyright" target="_blank">Open Data Commons Open Database License</a>.  Some map design &copy; MapBox; licensed according to the <a href="http://mapbox.com/tos/" target="_blank">MapBox Terms of Service</a>.  Location geocoding provided by <a href="http://www.mapquest.com/" target="_blank">Mapquest</a> and is not guaranteed to be accurate.  Some mapping services provided by <a href="http://cartodb.com/attributions" target="_blank">CartoDB</a>.  Snow plow route data provided by the City of Minneapolis.  Some code, techniques, and data on <a href="https://github.com/zzolo/minnpost-snow-emergency" target="_blank">Github</a>.  <a href="http://thenounproject.com/term/compass/30717/" target="_blank">Compass</a> designed by Chris Kerr from the the Noun Project.</p>
+    <p>Some map data &copy; OpenStreetMap contributors; licensed under the <a href="http://www.openstreetmap.org/copyright" target="_blank">Open Data Commons Open Database License</a>.  Some map design &copy; MapBox; licensed according to the <a href="http://mapbox.com/tos/" target="_blank">MapBox Terms of Service</a>.  Location geocoding provided by <a href="http://www.mapquest.com/" target="_blank">Mapquest</a> and is not guaranteed to be accurate.  Some mapping services provided by <a href="http://cartodb.com/attributions" target="_blank">CartoDB</a>.  Snow plow route data provided by the City of Minneapolis.  Some code, techniques, and data on <a href="https://github.com/zzolo/minnpost-snow-emergency" target="_blank">Github</a>.  <a href="http://thenounproject.com/term/compass/30717/" target="_blank">Compass</a> designed by Chris Kerr from the the Noun Project.  <a href="http://thenounproject.com/term/snowed-in/30065/">Snowed In</a> designed by Claire Jones from the Noun Project.</p>
 
   </div>
 </div>

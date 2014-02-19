@@ -6,9 +6,11 @@
 define('helpers', ['jquery', 'underscore'],
   function($, _) {
 
-
-  
-
+  _.mixin({
+    deepClone: function(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+  });
 
   // Create object of methods to use
   return {
