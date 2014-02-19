@@ -67,10 +67,14 @@ define('minnpost-snow-emergency', [
       this.data = {};
 
       // Determine day and some defaults
-      this.data.snowEmergencyDay = 2;
+      this.data.snowEmergencyDay = 3;
       this.data.isSnowEmergency = true;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
+      this.data.chooseDay = undefined;
+
+      // See if we can geo locat
+      this.data.canGeoLocate = this.checkGeolocate();
 
       // Create main application view
       this.mainView = new Ractive({
@@ -82,20 +86,21 @@ define('minnpost-snow-emergency', [
         }
       });
 
-      // Initialize map
-      this.map = new L.Map('snow-emergency-map', {
-        center: [44.970753517451946, -93.26185335000002],
-        zoom: 12
-      });
-      L.tileLayer('//{s}.tiles.mapbox.com/v3/minnpost.map-wi88b700/{z}/{x}/{y}.png').addTo(this.map);
+      // Is emergency
+      this.mainView.observe('isSnowEmergency', function(n, o) {
+        if (n === true) {
+          // Defer just to make sure dom is ready
+          _.defer(_.bind(thisApp.makeMap(), thisApp));
+        }
+      }, { defer: true });
 
-      // Add route layer
-      cartodb.createLayer(this.map, 'http://zzolo-minnpost.cartodb.com/api/v2/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/viz.json').addTo(this.map)
-      .on('done', function(layer) {
-        // thing
-      })
-      .on('error', function() {
-        //log the error
+      // Allow for "testing"
+      this.mainView.observe('chooseDay', function(n, o) {
+        n = parseInt(n, 10);
+        if (!_.isNaN(n)) {
+          this.set('snowEmergencyDay', n);
+          this.set('isSnowEmergency', true);
+        }
       });
 
       // Ensure regular form submission won't happen
@@ -113,15 +118,39 @@ define('minnpost-snow-emergency', [
       // Geolocation
       this.mainView.on('geolocateSearch', function(e) {
         e.original.preventDefault();
-
-        // Reset answer view
-        this.set('isLoading', true);
-        this.set('nearParking', undefined);
+        thisApp.resetSearch();
 
         // Use geolocation
         navigator.geolocation.getCurrentPosition(function(position) {
-          thisApp.closestRoutes(position.coords.latitude, position.coords.longitude);
+          thisApp.closestRoutes(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+        }, function(error) {
+          // error.code === 3
+          thisApp.mainView.set('messages', 'There was an error trying to find your position.');
+        }, {
+          // Options
         });
+      });
+    },
+
+    // Make the map
+    makeMap: function() {
+      // Initialize map
+      this.map = new L.Map('snow-emergency-map', {
+        center: [44.970753517451946, -93.26185335000002],
+        zoom: 12
+      });
+      L.tileLayer('//{s}.tiles.mapbox.com/v3/minnpost.map-wi88b700/{z}/{x}/{y}.png').addTo(this.map);
+
+      // Remove attribution
+      this.map.removeControl(this.map.attributionControl);
+
+      // Add route layer
+      cartodb.createLayer(this.map, 'http://zzolo-minnpost.cartodb.com/api/v2/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/viz.json').addTo(this.map)
+      .on('done', function(layer) {
+        // Something
+      })
+      .on('error', function() {
+        // Log error
       });
     },
 
@@ -130,9 +159,7 @@ define('minnpost-snow-emergency', [
       var thisApp = this;
 
       if (address) {
-        // Reset answer view
-        this.mainView.set('isLoading', true);
-        this.mainView.set('nearParking', undefined);
+        thisApp.resetSearch();
 
         // Geocode address
         $.getJSON(this.options.mapQuestQuery.replace('[[[ADDRESS]]]', address), function(response) {
@@ -159,7 +186,7 @@ define('minnpost-snow-emergency', [
       this.map.setView([lat, lon], 17);
 
       // Make query with lat/lon
-      SQL = 'SELECT * FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) LIMIT 25';
+      SQL = 'SELECT * FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) LIMIT 50';
 
       // Query CartoDB
       $.getJSON('http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=' + SQL + '', function(data) {
@@ -222,16 +249,28 @@ define('minnpost-snow-emergency', [
       this.map.addLayer(this.locationLayer);
     },
 
+    // Reset search stuff
+    resetSearch: function() {
+      this.mainView.set('isLoading', true);
+      this.mainView.set('nearParking', undefined);
+      this.mainView.set('messages', false);
+    },
+
+    // Check if can geolocate
+    checkGeolocate: function() {
+      return (_.isObject(navigator) && _.isObject(navigator.geolocation));
+    },
+
     // Default options
     defaultOptions: {
       projectName: 'minnpost-snow-emergency',
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
       colors: {
-        day1: '#2167AB',
-        day2: '#6B0FB2',
-        day3: '##FF5C00',
-        dontPark: '#B21A10'
+        day1: '#009BC2',
+        day2: '#7525BB',
+        day3: '#FF7424',
+        dontPark: '#B22715'
       }
     }
   });
