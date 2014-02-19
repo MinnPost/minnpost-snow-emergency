@@ -163,7 +163,8 @@ define('minnpost-snow-emergency', [
         // timeout: error.code === 3
         thisApp.issue('There was an error trying to find your position.');
       }, {
-        maximumAge: 1200
+        maximumAge: 1200,
+        enableHighAccuracy: true
       });
     },
 
@@ -199,7 +200,7 @@ define('minnpost-snow-emergency', [
     // Handle lat lon and get closest routes
     closestRoutes: function(lat, lon, meters) {
       var thisApp = this;
-      var SQL;
+      var closestSQL, noParkingSQL, distance;
 
       // Check if in Minneapolis
       if (lat < this.options.minneapolisExtent[1] ||
@@ -212,25 +213,30 @@ define('minnpost-snow-emergency', [
 
       // Set location
       this.location = [lat, lon];
+      this.accuracy = meters || this.options.defaultAccuracy;
 
       // Set view of map
       this.map.setView([lat, lon], 17);
 
-      // Make query with lat/lon
-      SQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) AS distance  FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) ASC LIMIT 50';
+      // Make queryies
+      distance = 'ST_Distance(ST_SetSRID(the_geom, 4326), ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326))';
+      closestSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes ORDER BY ' + distance + ' LIMIT 1';
+      noParkingSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes WHERE day' + this.data.snowEmergencyDay + ' = 0 ORDER BY ' + distance + ' LIMIT 20';
 
-      // Query CartoDB
-      $.getJSON('http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=' + SQL + '', function(data) {
-        thisApp.renderRoutes(data, meters);
-      });
+      // Get queries
+      $.when(
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', closestSQL)),
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', noParkingSQL))
+        ).done(function(closest, noParking) {
+          if (closest[1] === 'success' && noParking[1] === 'success') {
+            thisApp.renderRoutes(closest[0], noParking[0]);
+          }
+        });
     },
 
     // Show routes
-    renderRoutes: function(geoJSON, meters) {
+    renderRoutes: function(closest, noParking) {
       var thisApp = this;
-      var cloneJSON = _.deepClone(geoJSON);
-      var nearParking;
-      meters = meters || 15;
       this.mainView.set('messages', '');
 
       // Remove any existing layers
@@ -241,22 +247,11 @@ define('minnpost-snow-emergency', [
 
       // Use the closest one to suggest what is close
       this.mainView.set('isLoading', false);
-      cloneJSON.features = _.sortBy(cloneJSON.features, function(f) {
-        return f.properties.distance * -1;
-      });
-      nearParking = (_.first(cloneJSON.features).properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false;
+      nearParking = (closest.features[0].properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false;
       this.mainView.set('nearParking', nearParking);
 
-      // Filter out only dont park places
-      geoJSON.features = _.filter(geoJSON.features, function(f, fi) {
-        if (f.properties['day' + thisApp.data.snowEmergencyDay.toString()] === 0) {
-          return true;
-        }
-        return false;
-      });
-
       // Make layer and style
-      this.routeLayer = new L.geoJson(geoJSON, {
+      this.routeLayer = new L.geoJson(noParking, {
         style: function(feature) {
           return {
             fillColor: thisApp.options.colors.dontPark,
@@ -274,7 +269,7 @@ define('minnpost-snow-emergency', [
         radius: 8,
         fillColor: '#10B21A',
         color: '#10B21A',
-        weight: meters / 3,
+        weight: this.accuracy / 3,
         opacity: 0.25,
         fillOpacity: 0.85,
         clickable: false
@@ -317,6 +312,8 @@ define('minnpost-snow-emergency', [
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=[[[QUERY]]]',
+      defaultAccuracy: 15,
       colors: {
         day1: '#009BC2',
         day2: '#7525BB',
