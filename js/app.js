@@ -125,7 +125,7 @@ define('minnpost-snow-emergency', [
           thisApp.closestRoutes(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
         }, function(error) {
           // error.code === 3
-          thisApp.mainView.set('messages', 'There was an error trying to find your position.');
+          thisApp.issue('There was an error trying to find your position.');
         }, {
           // Options
         });
@@ -181,6 +181,15 @@ define('minnpost-snow-emergency', [
       var thisApp = this;
       var SQL;
 
+      // Check if in Minneapolis
+      if (lat < this.options.minneapolisExtent[1] ||
+        lat > this.options.minneapolisExtent[3] ||
+        lon < this.options.minneapolisExtent[0] ||
+        lon > this.options.minneapolisExtent[2]) {
+        this.issue('This location does not seem to be in Minneapolis.');
+        return;
+      }
+
       // Set location
       this.location = [lat, lon];
 
@@ -228,11 +237,9 @@ define('minnpost-snow-emergency', [
             color: thisApp.options.colors.dontPark,
             weight: 1,
             opacity: 0.5,
-            fillOpacity: 0.75
+            fillOpacity: 0.75,
+            clickable: false
           };
-        },
-        onEachFeature: function(feature, layer) {
-          layer.bindPopup('<p>Do not park here.</p>');
         }
       });
 
@@ -243,7 +250,8 @@ define('minnpost-snow-emergency', [
         color: '#10B21A',
         weight: 10,
         opacity: 0.45,
-        fillOpacity: 0.85
+        fillOpacity: 0.85,
+        clickable: false
       });
 
       // Add layers
@@ -263,9 +271,16 @@ define('minnpost-snow-emergency', [
       return (_.isObject(navigator) && _.isObject(navigator.geolocation));
     },
 
+    // Issue with location
+    issue: function(message) {
+      this.mainView.set('isLoading', false);
+      this.mainView.set('messages', message);
+    },
+
     // Default options
     defaultOptions: {
       projectName: 'minnpost-snow-emergency',
+      minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
       colors: {
