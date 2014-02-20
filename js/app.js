@@ -28,7 +28,7 @@ require.config({
     'Ractive': '../bower_components/ractive/build/Ractive-legacy.min',
     'Ractive-events-tap': '../bower_components/ractive-events-tap/Ractive-events-tap.min',
     'moment': '../bower_components/moment/min/moment.min',
-    'cartodb': '../bower_components/cartodb.js/dist/cartodb',
+    'cartodb': '../bower_components/cartodb.js/dist/cartodb.uncompressed',
     'minnpost-snow-emergency': 'app'
   }
 });
@@ -72,6 +72,7 @@ define('minnpost-snow-emergency', [
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
+      this.data.isNotCapable = this.options.isNotCapable;
 
       // See if we can geo locat
       this.data.canGeoLocate = this.checkGeolocate();
@@ -225,12 +226,14 @@ define('minnpost-snow-emergency', [
 
       // Get queries
       $.when(
-        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', closestSQL)),
-        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', noParkingSQL))
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', encodeURIComponent(closestSQL))),
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', encodeURIComponent(noParkingSQL)))
         ).done(function(closest, noParking) {
           if (closest[1] === 'success' && noParking[1] === 'success') {
             thisApp.renderRoutes(closest[0], noParking[0]);
           }
+        }).fail(function() {
+          thisApp.issue('There was an issue determining the closest snow emergency routes.');
         });
     },
 
@@ -312,13 +315,16 @@ define('minnpost-snow-emergency', [
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
-      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=[[[QUERY]]]',
+      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
       defaultAccuracy: 15,
       colors: {
         day1: '#009BC2',
         day2: '#7525BB',
         day3: '#FF7424',
         dontPark: '#B22715'
+      },
+      isNotCapable: {
+        toUseArrays: (helpers.isMSIE() <= 8 && helpers.isMSIE() > 4)
       }
     }
   });

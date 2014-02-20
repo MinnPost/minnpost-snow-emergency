@@ -165,6 +165,19 @@ body .node-unpublished {
     right: 10px;
   }
 
+  div.cartodb-legend.custom ul li,
+  div.cartodb-legend.category ul li,
+  div.cartodb-legend.color ul li {
+    list-style: none;
+  }
+
+  .no-cartodb {
+    .location-search-form,
+    #snow-emergency-map {
+      display: none;
+    }
+  }
+
   // Breakpoints
   @media screen and (max-width: 420px) {
     .narrative {
