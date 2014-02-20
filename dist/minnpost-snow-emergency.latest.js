@@ -154,7 +154,7 @@ define('helpers', ['jquery', 'underscore'],
 });
 
 
-define('text!templates/application.mustache',[],function () { return '<div class="message-container"></div>\n\n<div class="content-container">\n  {{^isSnowEmergency}}\n    <div class="narrative">\n      <h3>There is no snow emergency at the moment</h3>\n      <p>To plan ahead, set a snow emergency day:\n        <select value="{{ chooseDay }}">\n          <option value="">&lt;pick a day&gt;</option>\n          <option value="1">Day 1</option>\n          <option value="2">Day 2</option>\n          <option value="3">Day 3</option>\n        </select>\n      </p>\n    </div>\n  {{/isSnowEmergency}}\n\n  {{#isSnowEmergency}}\n    <div class="narrative">\n      <h3>It is Day {{ snowEmergencyDay }} of the snow emergency</h3>\n\n      <div class="snow-emergency-day-status">\n        {{#(snowEmergencyDay === 1)}}\n          <p>That means from 9PM to 8AM (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.</p>\n        {{/()}}\n\n        {{#(snowEmergencyDay === 2)}}\n          <p>That means from 8AM to 8PM, you cannot park on the even side of the street or parkways on non-snow emergency routes.  The even side of the street is most often the north and west sides of streets.</p>\n        {{/()}}\n\n        {{#(snowEmergencyDay === 3)}}\n          <p>That means from 8AM to 8PM, you cannot park on the odd side of the street  on non-snow emergency routes.  The odd side of the street is most often the south and east sides of streets.</p>\n        {{/()}}\n      </div>\n    </div>\n\n    <form proxy-submit="formSubmit" class="location-search-form">\n      <p>Search for an address to see parking restrictions near you.</p>\n      <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address, ex. 900 6th Ave SE, Minneapolis, MN 55414" />\n      <button type="submit" title="Search address" on-tap="addressSearch">Search</button>\n      <button type="submit" class="geolocation-button" title="Use the location of your device" on-tap="geolocateSearch"></button>\n    </form>\n\n    <div class="narrative">\n      {{#(isLoading === true)}}\n        {{>loading}}\n      {{/())}}\n\n      {{#messages}}\n        <p class="messages">{{ messages }}</p>\n      {{/messages}}\n\n      {{#(nearParking !== undefined)}}\n        {{#nearParking}}\n          <p>Looks like you shouldn\'t park there.  Check the map to be sure.</p>\n        {{/nearParking}}\n\n        {{^nearParking}}\n          <p>Looks like you are clear to park here.  Check the map to be sure.</p>\n        {{/nearParking}}\n\n        <div class="note">And follow any other posted parking signs.</div>\n      {{/()}}\n    </div>\n\n    <div id="snow-emergency-map"></div>\n  {{/isSnowEmergency}}\n\n</div>\n\n<div class="footnote-container">\n  <div class="footnote">\n    <p>Some map data &copy; OpenStreetMap contributors; licensed under the <a href="http://www.openstreetmap.org/copyright" target="_blank">Open Data Commons Open Database License</a>.  Some map design &copy; MapBox; licensed according to the <a href="http://mapbox.com/tos/" target="_blank">MapBox Terms of Service</a>.  Location geocoding provided by <a href="http://www.mapquest.com/" target="_blank">Mapquest</a> and is not guaranteed to be accurate.  Some mapping services provided by <a href="http://cartodb.com/attributions" target="_blank">CartoDB</a>.  Snow plow route data provided by the City of Minneapolis.  Some code, techniques, and data on <a href="https://github.com/zzolo/minnpost-snow-emergency" target="_blank">Github</a>.  <a href="http://thenounproject.com/term/compass/30717/" target="_blank">Compass</a> designed by Chris Kerr from the the Noun Project.  <a href="http://thenounproject.com/term/snowed-in/30065/">Snowed In</a> designed by Claire Jones from the Noun Project.</p>\n\n  </div>\n</div>\n';});
+define('text!templates/application.mustache',[],function () { return '<div class="message-container"></div>\n\n<div class="content-container {{#isNotCapable.toUseArrays}}no-cartodb{{/isNotCapable.toUseArrays}}">\n  {{^isSnowEmergency}}\n    <div class="narrative">\n      <h3>There is no snow emergency at the moment</h3>\n      <p>To plan ahead, set a snow emergency day:\n        <select value="{{ chooseDay }}">\n          <option value="">&lt;pick a day&gt;</option>\n          <option value="1">Day 1</option>\n          <option value="2">Day 2</option>\n          <option value="3">Day 3</option>\n        </select>\n      </p>\n    </div>\n  {{/isSnowEmergency}}\n\n  {{#isSnowEmergency}}\n    <div class="narrative">\n      <h3>It is Day {{ snowEmergencyDay }} of the snow emergency</h3>\n\n      <div class="snow-emergency-day-status">\n        {{#(snowEmergencyDay === 1)}}\n          <p>That means from 9PM to 8AM (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.</p>\n        {{/()}}\n\n        {{#(snowEmergencyDay === 2)}}\n          <p>That means from 8AM to 8PM, you cannot park on the even side of the street or parkways on non-snow emergency routes.</p>\n        {{/()}}\n\n        {{#(snowEmergencyDay === 3)}}\n          <p>That means from 8AM to 8PM, you cannot park on the odd side of the street on non-snow emergency routes.</p>\n        {{/()}}\n      </div>\n    </div>\n\n    <form proxy-submit="formSubmit" class="location-search-form">\n      <p>Search for an address or use your location to see parking restrictions near you.</p>\n\n      <input type="text" class="address-input" value="{{ address }}" placeholder="Enter address, ex. 900 6th Ave SE, Minneapolis, MN 55414" />\n\n      <button type="submit" class="address-button" title="Search address" on-tap="addressSearch">Search</button>\n\n      {{#canGeoLocate}}\n        <button type="submit" class="geolocation-button" title="Use the location of your device" on-tap="geolocateSearch"></button>\n      {{/canGeoLocate}}\n    </form>\n\n    <div class="narrative focus-found">\n      {{#(isLoading === true)}}\n        {{>loading}}\n      {{/())}}\n\n      {{#messages}}\n        <p class="messages">{{ messages }}</p>\n      {{/messages}}\n\n      {{#(nearParking !== undefined)}}\n        {{#nearParking}}\n          <p>Looks like you shouldn\'t park here.  Check the map to be sure.</p>\n        {{/nearParking}}\n\n        {{^nearParking}}\n          <p>Looks like you are clear to park here.  Check the map to be sure.</p>\n        {{/nearParking}}\n\n        <div class="note">And follow any other posted parking signs.</div>\n      {{/()}}\n    </div>\n\n    <div id="snow-emergency-map"></div>\n  {{/isSnowEmergency}}\n\n</div>\n\n<div class="footnote-container">\n  <div class="footnote">\n    <p>Some map data &copy; OpenStreetMap contributors; licensed under the <a href="http://www.openstreetmap.org/copyright" target="_blank">Open Data Commons Open Database License</a>.  Some map design &copy; MapBox; licensed according to the <a href="http://mapbox.com/tos/" target="_blank">MapBox Terms of Service</a>.  Location geocoding provided by <a href="http://www.mapquest.com/" target="_blank">Mapquest</a> and is not guaranteed to be accurate.  Some mapping services provided by <a href="http://cartodb.com/attributions" target="_blank">CartoDB</a>.  Snow plow route data provided by the City of Minneapolis.  Some code, techniques, and data on <a href="https://github.com/zzolo/minnpost-snow-emergency" target="_blank">Github</a>.  <a href="http://thenounproject.com/term/snowed-in/30065/">Snowed In</a> designed by Claire Jones from the Noun Project.</p>\n\n  </div>\n</div>\n';});
 
 
 define('text!templates/loading.mustache',[],function () { return '<div class="loading-container">\n  <div class="loading"><span>Loading...</span></div>\n</div>';});
@@ -189,7 +189,7 @@ require.config({
     'Ractive': '../bower_components/ractive/build/Ractive-legacy.min',
     'Ractive-events-tap': '../bower_components/ractive-events-tap/Ractive-events-tap.min',
     'moment': '../bower_components/moment/min/moment.min',
-    'cartodb': '../bower_components/cartodb.js/dist/cartodb',
+    'cartodb': '../bower_components/cartodb.js/dist/cartodb.uncompressed',
     'minnpost-snow-emergency': 'app'
   }
 });
@@ -233,6 +233,7 @@ define('minnpost-snow-emergency', [
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
+      this.data.isNotCapable = this.options.isNotCapable;
 
       // See if we can geo locat
       this.data.canGeoLocate = this.checkGeolocate();
@@ -324,7 +325,8 @@ define('minnpost-snow-emergency', [
         // timeout: error.code === 3
         thisApp.issue('There was an error trying to find your position.');
       }, {
-        maximumAge: 1200
+        maximumAge: 5000
+        //enableHighAccuracy: true
       });
     },
 
@@ -360,7 +362,7 @@ define('minnpost-snow-emergency', [
     // Handle lat lon and get closest routes
     closestRoutes: function(lat, lon, meters) {
       var thisApp = this;
-      var SQL;
+      var closestSQL, noParkingSQL, distance;
 
       // Check if in Minneapolis
       if (lat < this.options.minneapolisExtent[1] ||
@@ -373,25 +375,32 @@ define('minnpost-snow-emergency', [
 
       // Set location
       this.location = [lat, lon];
+      this.accuracy = meters || this.options.defaultAccuracy;
 
       // Set view of map
       this.map.setView([lat, lon], 17);
 
-      // Make query with lat/lon
-      SQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) AS distance  FROM snow_routes ORDER BY ST_SetSRID(the_geom, 4326) <-> ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326) ASC LIMIT 50';
+      // Make queryies
+      distance = 'ST_Distance(ST_SetSRID(the_geom, 4326), ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326))';
+      closestSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes ORDER BY ' + distance + ' LIMIT 1';
+      noParkingSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes WHERE day' + this.data.snowEmergencyDay + ' = 0 ORDER BY ' + distance + ' LIMIT 20';
 
-      // Query CartoDB
-      $.getJSON('http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&q=' + SQL + '', function(data) {
-        thisApp.renderRoutes(data, meters);
-      });
+      // Get queries
+      $.when(
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', encodeURIComponent(closestSQL))),
+        $.getJSON(this.options.cartoDBQuery.replace('[[[QUERY]]]', encodeURIComponent(noParkingSQL)))
+        ).done(function(closest, noParking) {
+          if (closest[1] === 'success' && noParking[1] === 'success') {
+            thisApp.renderRoutes(closest[0], noParking[0]);
+          }
+        }).fail(function() {
+          thisApp.issue('There was an issue determining the closest snow emergency routes.');
+        });
     },
 
     // Show routes
-    renderRoutes: function(geoJSON, meters) {
+    renderRoutes: function(closest, noParking) {
       var thisApp = this;
-      var cloneJSON = _.deepClone(geoJSON);
-      var nearParking = (_.first(cloneJSON.features).properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false;
-      meters = meters || 15;
       this.mainView.set('messages', '');
 
       // Remove any existing layers
@@ -402,18 +411,11 @@ define('minnpost-snow-emergency', [
 
       // Use the closest one to suggest what is close
       this.mainView.set('isLoading', false);
+      nearParking = (closest.features[0].properties['day' + this.data.snowEmergencyDay.toString()] === 0) ? true : false;
       this.mainView.set('nearParking', nearParking);
 
-      // Filter out only dont park places
-      geoJSON.features = _.filter(geoJSON.features, function(f, fi) {
-        if (f.properties['day' + thisApp.data.snowEmergencyDay.toString()] === 0) {
-          return true;
-        }
-        return false;
-      });
-
       // Make layer and style
-      this.routeLayer = new L.geoJson(geoJSON, {
+      this.routeLayer = new L.geoJson(noParking, {
         style: function(feature) {
           return {
             fillColor: thisApp.options.colors.dontPark,
@@ -431,8 +433,8 @@ define('minnpost-snow-emergency', [
         radius: 8,
         fillColor: '#10B21A',
         color: '#10B21A',
-        weight: meters / 5,
-        opacity: 0.45,
+        weight: this.accuracy / 3,
+        opacity: 0.25,
         fillOpacity: 0.85,
         clickable: false
       });
@@ -440,6 +442,14 @@ define('minnpost-snow-emergency', [
       // Add layers
       this.map.addLayer(this.routeLayer);
       this.map.addLayer(this.locationLayer);
+
+      // Scoll page.  Scroll if not currently watching
+      if (!this.watchID || !this.scrolled) {
+        $('html, body').stop().animate({
+          scrollTop: this.$el.find('.focus-found').offset().top - 15
+        }, 750);
+        this.scrolled = (this.watchID) ? true : false;
+      }
     },
 
     // Reset search stuff
@@ -466,11 +476,16 @@ define('minnpost-snow-emergency', [
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
+      defaultAccuracy: 15,
       colors: {
         day1: '#009BC2',
         day2: '#7525BB',
         day3: '#FF7424',
         dontPark: '#B22715'
+      },
+      isNotCapable: {
+        toUseArrays: (helpers.isMSIE() <= 8 && helpers.isMSIE() > 4)
       }
     }
   });
