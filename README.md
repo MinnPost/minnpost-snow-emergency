@@ -6,15 +6,14 @@ Snow emergency information given time and place.
 
 ## Data
 
-*Describe the data sources here.  Use links and URLs to show where the data came from.  Put small sized originals or modified data sources in the ```data``` folder*
+* Minneapolis data obtained through a DPA request and received via Email.
+* St. Paul data has been requested but not recieved yet.
 
-*For larger data sources that may need to be processed, provide instructions on how to download.  For instance:  ```cd data && wget blah.txt```.  Also, make sure to put an entry in the ```.gitignore```.*
+Data has been imported into [CartoDB](http://cartodb.com/) for it's geoquerying capabilities.
 
 ## Data processing
 
-The following describes how the data was processed and is not necessarily needed to run or install the application, but more included for reference, transparency, and development.
-
-*Describe data processing here, include commands.  Put data processing scripts or configurations in the ```data-processing``` folder.*
+No processing has been on the data.
 
 ## Development and running locally
 
@@ -28,8 +27,6 @@ All commands are assumed to be on the [command line](http://en.wikipedia.org/wik
    * On a Mac, do: `brew install node`
 1. Optionally, for development, install [Grunt](http://gruntjs.com/): `npm install -g grunt-cli`
 1. Install [Bower](http://bower.io/): `npm install -g bower`
-
-
 1. Install [Sass](http://sass-lang.com/): `gem install sass`
    * On a Mac do: `sudo gem install sass`
    1. Install [Compass](http://compass-style.org/): `gem install compass`
@@ -44,10 +41,6 @@ Get the code for this project and install the necessary dependency libraries and
 1. Go into the template directory: `cd minnpost-snow-emergency`
 1. Install NodeJS packages: `npm install`
 1. Install Bower components: `bower install`
-
-
-
-
 
 ### Running
 
@@ -67,7 +60,6 @@ To build or compile all the assets together for easy and efficient deployment, d
 Deploying will push the relevant files up to Amazon's AWS S3 so that they can be easily referenced on the MinnPost site.  This is specific to MinnPost, and your deployment might be different.
 
 1. Run: `grunt deploy`
-
 
 ## Hacks
 
