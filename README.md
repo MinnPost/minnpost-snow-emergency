@@ -6,14 +6,14 @@ Snow emergency information given time and place.
 
 ## Data
 
-* Minneapolis data obtained through a DPA request and received via Email.
+* Minneapolis data obtained through a DPA request, received via email, and included in this repository.
 * St. Paul data has been requested but not recieved yet.
 
 Data has been imported into [CartoDB](http://cartodb.com/) for it's geoquerying capabilities.
 
 ## Data processing
 
-No processing has been on the data.
+No processing has been done on the data.
 
 ## Development and running locally
 
