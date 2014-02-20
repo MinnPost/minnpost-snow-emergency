@@ -67,8 +67,8 @@ define('minnpost-snow-emergency', [
       this.data = {};
 
       // Determine day and some defaults
-      this.data.snowEmergencyDay = 3;
-      this.data.isSnowEmergency = true;
+      this.data.snowEmergencyDay = 1;
+      this.data.isSnowEmergency = false;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
