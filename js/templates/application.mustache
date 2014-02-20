@@ -20,17 +20,19 @@
       <h3>It is Day {{ snowEmergencyDay }} of the snow emergency</h3>
 
       <div class="snow-emergency-day-status">
-        {{#(snowEmergencyDay === 1)}}
-          <p>That means from 9PM to 8AM (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.</p>
-        {{/()}}
+        <p>
+          {{#(snowEmergencyDay === 1)}}
+            That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.
+          {{/()}}
+          {{#(snowEmergencyDay === 2)}}
+            That means from 8 a.m. to 8 p.m., you cannot park on the even side of the street or parkways on non-snow emergency routes.
+          {{/()}}
+          {{#(snowEmergencyDay === 3)}}
+            That means from 8 a.m. to 8 p.m., you cannot park on the odd side of the street on non-snow emergency routes.
+          {{/()}}
 
-        {{#(snowEmergencyDay === 2)}}
-          <p>That means from 8AM to 8PM, you cannot park on the even side of the street or parkways on non-snow emergency routes.</p>
-        {{/()}}
-
-        {{#(snowEmergencyDay === 3)}}
-          <p>That means from 8AM to 8PM, you cannot park on the odd side of the street on non-snow emergency routes.</p>
-        {{/()}}
+          The current snow emergency began on {{ lastSnowEmergencyDay.format('MMMM Do') }} at 9 p.m.
+        </p>
       </div>
     </div>
 
