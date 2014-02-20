@@ -35,12 +35,12 @@ require.config({
 
 // Create main application
 define('minnpost-snow-emergency', [
-  'jquery', 'underscore', 'helpers',
+  'jquery', 'underscore', 'moment', 'helpers',
   'Ractive', 'Ractive-events-tap', 'cartodb',
   'text!templates/application.mustache',
   'text!templates/loading.mustache'
 ], function(
-  $, _, helpers,
+  $, _, moment, helpers,
   Ractive, RactiveEventsTap, cartodb,
   tApplication, tLoading
 ) {
@@ -66,15 +66,16 @@ define('minnpost-snow-emergency', [
       var thisApp = this;
       this.data = {};
 
-      // Determine day and some defaults
-      this.data.snowEmergencyDay = 1;
-      this.data.isSnowEmergency = false;
+      // Determine day
+      this.snowEmergencyState();
+
+      // Set some values for the template
+      this.data.snowEmergencyDay = this.options.snowEmergencyDay;
+      this.data.isSnowEmergency = this.options.isSnowEmergency;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
       this.data.isNotCapable = this.options.isNotCapable;
-
-      // See if we can geo locat
       this.data.canGeoLocate = this.checkGeolocate();
 
       // Create main application view
@@ -309,9 +310,43 @@ define('minnpost-snow-emergency', [
       this.mainView.set('messages', message);
     },
 
+    // Determine snow emergency state
+    snowEmergencyState: function() {
+      var now = moment().zone(-3600).local();
+      var points = {};
+      var sDay = moment(this.options.lastSnowEmergencyDay).zone(-3600).local();
+
+      if (moment.isMoment(this.options.lastSnowEmergencyDay)) {
+        points = {
+          day1: moment(sDay).hour(2).minute(0),
+          day2: moment(sDay).add('d', 1).hour(8).minute(0),
+          day3: moment(sDay).add('d', 2).hour(4).minute(0),
+          over: moment(sDay).add('d', 2).hour(20).minute(0)
+        };
+
+        // The last date should be within 3 days of now
+        if (now.isAfter(points.over) || now.isBefore(points.day1)) {
+          this.options.isSnowEmergency = false;
+        }
+        else {
+          this.options.isSnowEmergency = true;
+
+          // Day 1
+          this.options.snowEmergencyDay = (now.isAfter(points.day1)) ? 1 : this.options.snowEmergencyDay;
+          // Day 2
+          this.options.snowEmergencyDay = (now.isAfter(points.day2)) ? 2 : this.options.snowEmergencyDay;
+          // Day 3
+          this.options.snowEmergencyDay = (now.isAfter(points.day3)) ? 3 : this.options.snowEmergencyDay;
+        }
+      }
+    },
+
     // Default options
     defaultOptions: {
       projectName: 'minnpost-snow-emergency',
+      isSnowEmergency: true,
+      snowEmergencyDay: 1,
+      lastSnowEmergencyDay: moment('2014-02-20'),
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please do not steal
       mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
