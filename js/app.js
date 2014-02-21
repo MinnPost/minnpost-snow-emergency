@@ -73,10 +73,12 @@ define('minnpost-snow-emergency', [
       this.data.snowEmergencyDay = this.options.snowEmergencyDay;
       this.data.isSnowEmergency = this.options.isSnowEmergency;
       this.data.lastSnowEmergencyDay = this.options.lastSnowEmergencyDay;
+      this.data.snowEmergencyTitle = this.options.snowEmergencyTitle;
+      this.data.snowEmergencyText = this.options.snowEmergencyText;
+      this.data.isNotCapable = this.options.isNotCapable;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
-      this.data.isNotCapable = this.options.isNotCapable;
       this.data.canGeoLocate = this.checkGeolocate();
 
       // Create main application view
@@ -314,30 +316,67 @@ define('minnpost-snow-emergency', [
     // Determine snow emergency state
     snowEmergencyState: function() {
       var now = moment().zone(-3600).local();
-      var points = {};
       var sDay = moment(this.options.lastSnowEmergencyDay).zone(-3600).local();
+      var points = {};
+      var restrictions = {};
 
+      // Ensure we were given a good date
       if (moment.isMoment(this.options.lastSnowEmergencyDay)) {
+        // The different points for calculating when in the snow
+        // emergency we are
         points = {
-          day1: moment(sDay).hour(2).minute(0),
-          day2: moment(sDay).add('d', 1).hour(8).minute(0),
-          day3: moment(sDay).add('d', 2).hour(4).minute(0),
-          over: moment(sDay).add('d', 2).hour(20).minute(0)
+          day1before: moment(sDay).hour(2).minute(0),
+          day1start: moment(sDay).hour(21).minute(0),
+          day2start: moment(sDay).add('d', 1).hour(8).minute(0),
+          day2over: moment(sDay).add('d', 1).hour(20).minute(0),
+          day3start: moment(sDay).add('d', 2).hour(8).minute(0),
+          day3over: moment(sDay).add('d', 2).hour(20).minute(0)
+        };
+
+        // Restriction copy
+        restrictions = {
+          day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
+          day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of the street or parkways on non-snow emergency routes.',
+          day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of the street on non-snow emergency routes.'
         };
 
         // The last date should be within 3 days of now
-        if (now.isAfter(points.over) || now.isBefore(points.day1)) {
+        if (now.isAfter(points.day3over) || now.isBefore(points.day1before)) {
           this.options.isSnowEmergency = false;
         }
         else {
           this.options.isSnowEmergency = true;
 
-          // Day 1
-          this.options.snowEmergencyDay = (now.isAfter(points.day1)) ? 1 : this.options.snowEmergencyDay;
-          // Day 2
-          this.options.snowEmergencyDay = (now.isAfter(points.day2)) ? 2 : this.options.snowEmergencyDay;
+          // Before Day 1 restrictions start
+          if (now.isAfter(points.day1before) && now.isBefore(points.day1start)) {
+            this.options.snowEmergencyDay = 1;
+            this.options.snowEmergencyTitle = 'Snow emergency declared, Day 1 restrictions start at 9 p.m.';
+            this.options.snowEmergencyText = restrictions.day1;
+          }
+          // Day 1 in effect
+          else if ((now.isAfter(points.day1start) || now.isSame(points.day1start)) && now.isBefore(points.day2start)) {
+            this.options.snowEmergencyDay = 1;
+            this.options.snowEmergencyTitle = 'It is Day 1 of a snow emergency';
+            this.options.snowEmergencyText = restrictions.day1;
+          }
+          // Day 2 in effect
+          else if ((now.isAfter(points.day2start) || now.isSame(points.day2start)) && now.isBefore(points.day2over)) {
+            this.options.snowEmergencyDay = 2;
+            this.options.snowEmergencyTitle = 'It is Day 2 of a snow emergency';
+            this.options.snowEmergencyText = restrictions.day2;
+          }
+          // Between Day 2 and Day 3
+          else if ((now.isAfter(points.day2over) || now.isSame(points.day2over)) && now.isBefore(points.day3start)) {
+            this.options.snowEmergencyDay = 3;
+            this.options.snowEmergencyTitle = 'Snow emergency in effect, Day 3 restrictions start at 8 a.m.';
+            this.options.snowEmergencyText = restrictions.day3;
+          }
           // Day 3
-          this.options.snowEmergencyDay = (now.isAfter(points.day3)) ? 3 : this.options.snowEmergencyDay;
+          else if ((now.isAfter(points.day3start) || now.isSame(points.day3start)) && now.isBefore(points.day3over)) {
+            this.options.snowEmergencyDay = 3;
+            this.options.snowEmergencyTitle = 'It is Day 3 of a snow emergency';
+            this.options.snowEmergencyText = restrictions.day3;
+          }
         }
       }
     },
