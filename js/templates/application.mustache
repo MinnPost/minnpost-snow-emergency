@@ -1,6 +1,10 @@
 <div class="message-container"></div>
 
 <div class="content-container {{#isNotCapable.toUseArrays}}no-cartodb{{/isNotCapable.toUseArrays}}">
+  {{#winterParkingRestriction}}
+    <p class="parking-restrictions"><strong>Winter parking restrictions in effect.</strong>  This means that you cannot park on the even side of the street until April 1st or until notified by the City. This does not apply during snow emergencies.</p>
+  {{/winterParkingRestriction}}
+
   {{^isSnowEmergency}}
     <div class="narrative">
       <h3>There is no snow emergency at the moment</h3>
@@ -20,7 +24,11 @@
       <h3>{{ snowEmergencyTitle }}</h3>
 
       <div class="snow-emergency-day-status">
-        <p>{{ snowEmergencyText }}  The current snow emergency began on {{ lastSnowEmergencyDay.format('MMMM Do') }} at 9 p.m.</p>
+        <p>{{ snowEmergencyText }}
+          {{#(lastSnowEmergencyDay !== null)}}
+            The current snow emergency began on {{ lastSnowEmergencyDay.format('MMMM Do') }} at 9 p.m.
+          {{/()}}
+        </p>
       </div>
     </div>
 

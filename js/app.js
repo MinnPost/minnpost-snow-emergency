@@ -76,6 +76,7 @@ define('minnpost-snow-emergency', [
       this.data.snowEmergencyTitle = this.options.snowEmergencyTitle;
       this.data.snowEmergencyText = this.options.snowEmergencyText;
       this.data.isNotCapable = this.options.isNotCapable;
+      this.data.winterParkingRestriction = this.options.winterParkingRestriction;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
       this.data.chooseDay = undefined;
@@ -103,8 +104,11 @@ define('minnpost-snow-emergency', [
       this.mainView.observe('chooseDay', function(n, o) {
         n = parseInt(n, 10);
         if (!_.isNaN(n)) {
+          this.set('lastSnowEmergencyDay', null);
           this.set('snowEmergencyDay', n);
           this.set('isSnowEmergency', true);
+          this.set('snowEmergencyTitle', 'It is Day ' + n + ' of the snow emergency');
+          this.set('snowEmergencyText', thisApp.options.restrictions['day' + n]);
         }
       });
 
@@ -333,13 +337,6 @@ define('minnpost-snow-emergency', [
           day3over: moment(sDay).add('d', 2).hour(20).minute(0)
         };
 
-        // Restriction copy
-        restrictions = {
-          day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
-          day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of the street or parkways on non-snow emergency routes.',
-          day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of the street on non-snow emergency routes.'
-        };
-
         // The last date should be within 3 days of now
         if (now.isAfter(points.day3over) || now.isBefore(points.day1before)) {
           this.options.isSnowEmergency = false;
@@ -351,31 +348,31 @@ define('minnpost-snow-emergency', [
           if (now.isAfter(points.day1before) && now.isBefore(points.day1start)) {
             this.options.snowEmergencyDay = 1;
             this.options.snowEmergencyTitle = 'Snow emergency declared, Day 1 restrictions start at 9 p.m.';
-            this.options.snowEmergencyText = restrictions.day1;
+            this.options.snowEmergencyText = this.options.restrictions.day1;
           }
           // Day 1 in effect
           else if ((now.isAfter(points.day1start) || now.isSame(points.day1start)) && now.isBefore(points.day2start)) {
             this.options.snowEmergencyDay = 1;
             this.options.snowEmergencyTitle = 'It is Day 1 of a snow emergency';
-            this.options.snowEmergencyText = restrictions.day1;
+            this.options.snowEmergencyText = this.options.restrictions.day1;
           }
           // Day 2 in effect
           else if ((now.isAfter(points.day2start) || now.isSame(points.day2start)) && now.isBefore(points.day2over)) {
             this.options.snowEmergencyDay = 2;
             this.options.snowEmergencyTitle = 'It is Day 2 of a snow emergency';
-            this.options.snowEmergencyText = restrictions.day2;
+            this.options.snowEmergencyText = this.options.restrictions.day2;
           }
           // Between Day 2 and Day 3
           else if ((now.isAfter(points.day2over) || now.isSame(points.day2over)) && now.isBefore(points.day3start)) {
             this.options.snowEmergencyDay = 3;
             this.options.snowEmergencyTitle = 'Snow emergency in effect, Day 3 restrictions start at 8 a.m.';
-            this.options.snowEmergencyText = restrictions.day3;
+            this.options.snowEmergencyText = this.options.restrictions.day3;
           }
           // Day 3
           else if ((now.isAfter(points.day3start) || now.isSame(points.day3start)) && now.isBefore(points.day3over)) {
             this.options.snowEmergencyDay = 3;
             this.options.snowEmergencyTitle = 'It is Day 3 of a snow emergency';
-            this.options.snowEmergencyText = restrictions.day3;
+            this.options.snowEmergencyText = this.options.restrictions.day3;
           }
         }
       }
@@ -400,7 +397,13 @@ define('minnpost-snow-emergency', [
       },
       isNotCapable: {
         toUseArrays: (helpers.isMSIE() <= 8 && helpers.isMSIE() > 4)
-      }
+      },
+      restrictions: {
+        day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
+        day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of the street or parkways on non-snow emergency routes.',
+        day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of the street on non-snow emergency routes.'
+      },
+      winterParkingRestriction: true
     }
   });
 
