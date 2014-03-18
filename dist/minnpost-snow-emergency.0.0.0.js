@@ -561,8 +561,8 @@ define('minnpost-snow-emergency', [
       },
       restrictions: {
         day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
-        day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of the street or parkways on non-snow emergency routes.',
-        day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of the street on non-snow emergency routes.'
+        day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of non-snow emergency routes or on either side of parkways.',
+        day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of non-snow emergency routes.'
       },
       winterParkingRestriction: true
     }
