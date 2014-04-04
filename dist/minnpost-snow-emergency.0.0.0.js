@@ -564,7 +564,7 @@ define('minnpost-snow-emergency', [
         day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of non-snow emergency routes or on either side of parkways.',
         day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of non-snow emergency routes.'
       },
-      winterParkingRestriction: true
+      winterParkingRestriction: false
     }
   });
 
