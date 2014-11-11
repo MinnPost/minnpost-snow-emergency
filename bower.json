@@ -1,6 +1,6 @@
 {
   "name": "minnpost-snow-emergency",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "main": "index.html",
   "homepage": "https://github.com/minnpost/minnpost-snow-emergency",
   "repository": {
@@ -14,13 +14,120 @@
     "email": "data@minnpost.com"
   },
   "dependencies": {
-    "moment": "~2.5.1",
-    "jquery": "~1.11",
-    "ractive": "~0.3.9",
+    "moment": "~2.8.3",
+    "jquery": "^1.11",
+    "ractive": "^0.5.8",
     "ractive-events-tap": "~0.1.0",
     "requirejs": "~2.1.11",
     "text": "~2.0.10",
-    "underscore": "~1.6.0",
-    "cartodb.js": "~3.5.0"
+    "underscore": "~1.7.0",
+    "cartodb.js": "~3.11.30",
+    "almond": "~0.3.0",
+    "backbone": "~1.1.2",
+    "minnpost-styles": "master",
+    "rgrove-lazyload": "*"
+  },
+  "dependencyMap": {
+    "requirejs": {
+      "rname": "requirejs",
+      "js": [
+        "requirejs/require"
+      ]
+    },
+    "almond": {
+      "rname": "almond",
+      "js": [
+        "almond/almond"
+      ]
+    },
+    "text": {
+      "rname": "text",
+      "js": [
+        "text/text"
+      ]
+    },
+    "jquery": {
+      "rname": "jquery",
+      "js": [
+        "jquery/dist/jquery"
+      ],
+      "returns": "$"
+    },
+    "underscore": {
+      "rname": "underscore",
+      "js": [
+        "underscore/underscore"
+      ],
+      "returns": "_"
+    },
+    "backbone": {
+      "rname": "backbone",
+      "js": [
+        "backbone/backbone"
+      ],
+      "returns": "Backbone"
+    },
+    "rgrove-lazyload": {
+      "rname": "lazyload",
+      "js": [
+        "rgrove-lazyload/lazyload"
+      ],
+      "returns": "Lazyload"
+    },
+    "ractive": {
+      "rname": "ractive",
+      "js": [
+        "ractive/ractive-legacy"
+      ],
+      "returns": "Ractive"
+    },
+    "ractive-backbone": {
+      "rname": "ractive-backbone",
+      "js": [
+        "ractive-backbone/ractive-adaptors-backbone"
+      ],
+      "returns": "RactiveBackbone"
+    },
+    "ractive-events-tap": {
+      "rname": "ractive-events-tap",
+      "js": [
+        "ractive-events-tap/ractive-events-tap"
+      ],
+      "returns": "RactiveEventsTap"
+    },
+    "moment": {
+      "rname": "moment",
+      "js": [
+        "moment/moment"
+      ],
+      "returns": "moment"
+    },
+    "cartodb": {
+      "rname": "cartodb",
+      "js": [
+        "cartodb.js/dist/cartodb.uncompressed"
+      ],
+      "css": [
+        "cartodb.js/themes/css/cartodb"
+      ],
+      "ie": [
+        "cartodb.js/themes/css/cartodb.ie"
+      ],
+      "returns": "cartodb"
+    },
+    "mpConfig": {
+      "rname": "mpConfig",
+      "js": [
+        "minnpost-styles/dist/minnpost-styles.config"
+      ],
+      "returns": "mpConfig"
+    },
+    "mpFormatters": {
+      "rname": "mpFormatters",
+      "js": [
+        "minnpost-styles/dist/minnpost-styles.formatters"
+      ],
+      "returns": "mpFormatters"
+    }
   }
 }

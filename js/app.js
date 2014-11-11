@@ -1,70 +1,61 @@
 /**
  * Main application file for: minnpost-snow-emergency
- *
- * This pulls in all the parts
+ * * This pulls in all the parts
  * and creates the main object for the application.
  */
 
-/**
- * RequireJS config which maps out where files are and shims
- * any non-compliant libraries.
- */
-require.config({
-  shim: {
-    // CartoDB is multiple libraries in one and
-    // will usually export Leaflet.  Shim doesn't
-    // seem to fix it so we just manually
-    // use window.cartodb
-    cartodb: {
-      exports: 'cartodb'
-    }
-  },
-  baseUrl: 'js',
-  paths: {
-    'requirejs': '../bower_components/requirejs/require',
-    'text': '../bower_components/text/text',
-    'jquery': '../bower_components/jquery/jquery.min',
-    'underscore': '../bower_components/underscore/underscore',
-    'Ractive': '../bower_components/ractive/build/Ractive-legacy.min',
-    'Ractive-events-tap': '../bower_components/ractive-events-tap/Ractive-events-tap.min',
-    'moment': '../bower_components/moment/min/moment.min',
-    'cartodb': '../bower_components/cartodb.js/dist/cartodb.uncompressed',
-    'minnpost-snow-emergency': 'app'
-  }
-});
-
 // Create main application
-define('minnpost-snow-emergency', [
-  'jquery', 'underscore', 'moment', 'helpers',
-  'Ractive', 'Ractive-events-tap', 'cartodb',
+require([
+  'jquery', 'underscore', 'backbone', 'ractive', 'ractive-events-tap',
+  'cartodb', 'moment', 'base',
   'text!templates/application.mustache',
   'text!templates/loading.mustache'
 ], function(
-  $, _, moment, helpers,
-  Ractive, RactiveEventsTap, cartodb,
+  $, _, Backbone, Ractive, RactiveEventsTap, cartodb, moment, Base,
   tApplication, tLoading
-) {
+  ) {
+  'use strict';
 
   // Get the correct cartodb and leaflet
   var L = window.L;
   cartodb = window.cartodb;
 
-  // Constructor for app
-  var App = function(options) {
-    this.options = _.extend(this.defaultOptions, options);
-    this.el = this.options.el;
-    if (this.el) {
-      this.$el = $(this.el);
-      this.$content = this.$el.find('.content-container');
-    }
-  };
+  // Create new class for app
+  var App = Base.BaseApp.extend({
 
-  // Extend with custom methods
-  _.extend(App.prototype, {
-    // Start function
-    start: function() {
+    defaults: {
+      name: 'minnpost-snow-emergency',
+      el: '.minnpost-snow-emergency-container',
+      isSnowEmergency: true,
+      snowEmergencyDay: 1,
+      lastSnowEmergencyDay: moment('2014-02-20'),
+      minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
+      // Please do not steal
+      mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
+      defaultAccuracy: 15,
+      colors: {
+        day1: '#009BC2',
+        day2: '#7525BB',
+        day3: '#FF7424',
+        dontPark: '#B22715'
+      },
+      restrictions: {
+        day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
+        day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of non-snow emergency routes or on either side of parkways.',
+        day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of non-snow emergency routes.'
+      },
+      winterParkingRestriction: false
+    },
+
+    initialize: function() {
       var thisApp = this;
       this.data = {};
+
+      // Determine some capabilities
+      this.options.isNotCapable = {
+        toUseArrays: (this.isMSIE() <= 8 && this.isMSIE() > 4)
+      };
 
       // Determine day
       this.snowEmergencyState();
@@ -376,36 +367,9 @@ define('minnpost-snow-emergency', [
           }
         }
       }
-    },
-
-    // Default options
-    defaultOptions: {
-      projectName: 'minnpost-snow-emergency',
-      isSnowEmergency: true,
-      snowEmergencyDay: 1,
-      lastSnowEmergencyDay: moment('2014-02-20'),
-      minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
-      // Please do not steal
-      mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
-      cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
-      defaultAccuracy: 15,
-      colors: {
-        day1: '#009BC2',
-        day2: '#7525BB',
-        day3: '#FF7424',
-        dontPark: '#B22715'
-      },
-      isNotCapable: {
-        toUseArrays: (helpers.isMSIE() <= 8 && helpers.isMSIE() > 4)
-      },
-      restrictions: {
-        day1: 'That means from 9 p.m. to 8 a.m. (overnight), you cannot park on streets that are marked as snow emergency routes.  These are routes with specific signs or blue street signs.',
-        day2: 'That means from 8 a.m. to 8 p.m., you cannot park on the even side of non-snow emergency routes or on either side of parkways.',
-        day3: 'That means from 8 a.m. to 8 p.m., you cannot park on the odd side of non-snow emergency routes.'
-      },
-      winterParkingRestriction: false
     }
   });
 
-  return App;
+  // Create instance and return
+  return new App({});
 });

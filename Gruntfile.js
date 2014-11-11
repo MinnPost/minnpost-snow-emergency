@@ -8,12 +8,24 @@
 module.exports = function(grunt) {
   var _ = grunt.util._;
 
-  /**
-   * Maintain list of libraries here.
-   *
-   * Order matters for build.
-   */
-  var components = grunt.file.readJSON('bower_map.json');
+  // Bower has an custom section, 'dependencyMap' to manage which files
+  // we actually want to include.  Order of list matters.
+  var bower = grunt.file.readJSON('bower.json');
+  var components = bower.dependencyMap;
+  var componentParts = {
+    js: _.map(_.compact(_.flatten(_.pluck(components, 'js'))), function(c) {
+      return 'bower_components/' + c + '.js';
+    }),
+    // Since we hack up CartoDB's CSS, we need to replace it with
+    // our new one
+    css: _.map(_.compact(_.flatten(_.pluck(components, 'css'))), function(c) {
+      return c.indexOf('cartodb') !== -1 ? '.tmp/cartodb.css' : 'bower_components/' + c + '.css';
+    }),
+    ie: _.map(_.compact(_.flatten(_.pluck(components, 'ie'))), function(c) {
+      return c.indexOf('cartodb') !== -1 ? '.tmp/cartodb.ie.css' : 'bower_components/' + c + '.css';
+    })
+  };
+
 
   // Project configuration.  Many values are directly read from
   // package.json.
@@ -34,6 +46,7 @@ module.exports = function(grunt) {
         '<%= "\\n\\n" %>'
     },
     components: components,
+    componentParts: componentParts,
 
     // Clean up the distribution fold
     clean: {
@@ -44,14 +57,15 @@ module.exports = function(grunt) {
     jshint: {
       options: {
         curly: true,
-        //es3: true,
         forin: true,
         latedef: true,
-        //maxlen: 80,
-        indent: 2
+        indent: 2,
+        // For document.write in deployment.js
+        evil: true
       },
-      files: ['Gruntfile.js', 'js/*.js', 'data-processing/*.js']
+      files: ['Gruntfile.js', 'js/**/*.js', 'tests/**/*.js', 'data-processing/**/*.js']
     },
+
 
     // Compass is an extended SASS.  Set it up so that it generates to .tmp/
     compass: {
@@ -69,9 +83,10 @@ module.exports = function(grunt) {
       dist: {
         options: {
           environment: 'production',
-          outputStyle: 'compressed',
+          outputStyle: 'expanded',
           relativeAssets: false,
-          cssDir: '.tmp/dist_css'
+          cssDir: '.tmp/dist_css',
+          generatedImagesDir: '.tmp/dist_css/images'
         }
       },
       dev: {
@@ -81,26 +96,6 @@ module.exports = function(grunt) {
       }
     },
 
-    // Hack up cartodb's css images url so that
-    // we use it.
-    replace: {
-      cartodb_css: {
-        src: './bower_components/cartodb.js/themes/css/cartodb.css',
-        dest: '.tmp/cartodb.css',
-        replacements: [{
-          from: "url('../img/",
-          to: "url('images/"
-        }]
-      },
-      cartodb_css_ie: {
-        src: './bower_components/cartodb.js/themes/css/cartodb.ie.css',
-        dest: '.tmp/cartodb.ie.css',
-        replacements: [{
-          from: "url('../img/",
-          to: "url('images/"
-        }]
-      }
-    },
 
     // Copy relevant files over to distribution
     copy: {
@@ -138,46 +133,92 @@ module.exports = function(grunt) {
       }
     },
 
+    // Hack up cartodb's css images url so that
+    // we use it.
+    replace: {
+      cartodb_css: {
+        src: './bower_components/cartodb.js/themes/css/cartodb.css',
+        dest: '.tmp/cartodb.css',
+        replacements: [{
+          from: "url('../img/",
+          to: "url('images/"
+        }]
+      },
+      cartodb_css_ie: {
+        src: './bower_components/cartodb.js/themes/css/cartodb.ie.css',
+        dest: '.tmp/cartodb.ie.css',
+        replacements: [{
+          from: "url('../img/",
+          to: "url('images/"
+        }]
+      }
+    },
 
-    // R.js to bring together files through requirejs.  We exclude libraries
-    // and compile them separately.
+    // R.js to bring together files through requirejs.  We have two main builds.
+    // The first is the application build, for application, we exclude libraries
+    // and compile them separately for network efficiency as these will change
+    // less often than the application code.
+    //
+    // The second is for embedding which puts all the JS together.
     requirejs: {
       app: {
         options: {
-          name: 'minnpost-snow-emergency',
+          name: 'app',
+          // Exclude libraries
           exclude: _.compact(_.flatten(_.pluck(_.filter(components, function(c) { return (c.js !== undefined); }), 'rname'))),
           baseUrl: 'js',
-          mainConfigFile: 'js/app.js',
+          mainConfigFile: 'js/config.js',
           out: 'dist/<%= pkg.name %>.latest.js',
           optimize: 'none'
         }
       },
       libs: {
         options: {
+          // Include just libraries
           include: _.compact(_.flatten(_.pluck(_.filter(components, function(c) { return (c.js !== undefined); }), 'rname'))),
+          exclude: ['requirejs'],
           baseUrl: 'js',
-          mainConfigFile: 'js/app.js',
+          mainConfigFile: 'js/config.js',
           out: 'dist/<%= pkg.name %>.libs.js',
           optimize: 'none',
           wrap: {
-            startFile: 'js/wrapper.start.js',
-            endFile: 'js/wrapper.end.js'
+            startFile: 'js/build/wrapper.start.js',
+            endFile: 'js/build/wrapper.end.js'
+          }
+        }
+      },
+      embed: {
+        options: {
+          name: 'app',
+          include: ['almond'],
+          exclude: ['requirejs'],
+          baseUrl: 'js',
+          mainConfigFile: 'js/config.js',
+          out: 'dist/<%= pkg.name %>.embed.latest.js',
+          optimize: 'none',
+          wrap: {
+            startFile: 'js/build/wrapper.start.js',
+            endFile: 'js/build/wrapper.end.js'
           }
         }
       }
     },
 
-
-    // Brings files toggether
-
+    // Brings files toggether.  We make versioned files so that when deployed,
+    // there is a versioned and latest which allows to work and deploy
+    // without overriding exising published pieces.
     concat: {
       options: {
         separator: '\r\n\r\n'
       },
       // JS version
       js: {
-        src: ['dist/<%= pkg.name %>.latest.js'],
+        src: ['<%= requirejs.app.options.out %>'],
         dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.js'
+      },
+      jsEmbed: {
+        src: ['<%= requirejs.embed.options.out %>'],
+        dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.embed.js'
       },
       // CSS
       css: {
@@ -191,44 +232,50 @@ module.exports = function(grunt) {
         src: ['<%= concat.css.src %>'],
         dest: 'dist/<%= pkg.name %>.latest.css'
       },
-      cssIe: {
-        src: [
-
-          '<%= compass.dist.options.cssDir %>/main.ie.css'
-        ],
-        dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.ie.css'
-      },
-      cssIeLatest: {
-        src: ['<%= concat.cssIe.src %>'],
-        dest: 'dist/<%= pkg.name %>.latest.ie.css'
-      },
       // CSS Libs
       cssLibs: {
-        src: ['<%= _.map(_.compact(_.flatten(_.pluck(components, "css"))), function(c) { return (c.indexOf("cartodb") >= 0) ? ".tmp/cartodb.css" : "bower_components/" + c + ".css"; }) %>'],
+        src: _.isEmpty(componentParts.css) ? ['nofile'] : componentParts.css,
         dest: 'dist/<%= pkg.name %>.libs.css'
       },
       cssIeLibs: {
-        src: ['<%= _.map(_.compact(_.flatten(_.pluck(components, "ie"))), function(c) { return (c.indexOf("cartodb") >= 0) ? ".tmp/cartodb.ie.css" : "bower_components/" + c + ".css"; }) %>'],
+        src: _.isEmpty(componentParts.ie) ? ['nofile'] : componentParts.ie,
         dest: 'dist/<%= pkg.name %>.libs.ie.css'
       }
     },
-
 
     // Minify JS for network efficiency
     uglify: {
       options: {
         banner: '<%= meta.banner %>'
       },
-      dist: {
+      js: {
         src: ['<%= concat.js.dest %>'],
         dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.min.js'
       },
-      distLatest: {
+      jsEmbed: {
+        src: ['<%= concat.jsEmbed.dest %>'],
+        dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.embed.min.js'
+      },
+      jsLatest: {
         options: {
           banner: '<%= meta.bannerLatest %>'
         },
         src: ['<%= concat.js.dest %>'],
         dest: 'dist/<%= pkg.name %>.latest.min.js'
+      },
+      jsLatestEmbed: {
+        options: {
+          banner: '<%= meta.bannerLatest %>'
+        },
+        src: ['<%= concat.jsEmbed.dest %>'],
+        dest: 'dist/<%= pkg.name %>.latest.embed.min.js'
+      },
+      jsLibs: {
+        options: {
+          banner: ''
+        },
+        src: ['dist/<%= pkg.name %>.libs.js'],
+        dest: 'dist/<%= pkg.name %>.libs.min.js'
       }
     },
 
@@ -249,16 +296,19 @@ module.exports = function(grunt) {
         src: ['<%= concat.css.dest %>'],
         dest: 'dist/<%= pkg.name %>.latest.min.css'
       },
-      cssIe: {
-        src: ['<%= concat.cssIe.dest %>'],
-        dest: 'dist/<%= pkg.name %>.<%= pkg.version %>.min.ie.css'
-      },
-      cssIeLatest: {
+      cssLibs: {
         options: {
-          banner: '<%= meta.bannerLatest %>'
+          banner: ''
         },
-        src: ['<%= concat.cssIe.dest %>'],
-        dest: 'dist/<%= pkg.name %>.latest.min.ie.css'
+        src: ['<%= concat.cssLibs.dest %>'],
+        dest: 'dist/<%= pkg.name %>.libs.min.css'
+      },
+      cssIeLibs: {
+        options: {
+          banner: ''
+        },
+        src: ['<%= concat.cssIeLibs.dest %>'],
+        dest: 'dist/<%= pkg.name %>.libs.min.ie.css'
       }
     },
 
@@ -276,7 +326,8 @@ module.exports = function(grunt) {
         //key: 'YOUR KEY',
         //secret: 'YOUR SECRET',
         bucket: 'data.minnpost',
-        access: 'public-read'
+        access: 'public-read',
+        gzip: true
       },
       mp_deploy: {
         upload: [
@@ -297,18 +348,54 @@ module.exports = function(grunt) {
         ]
       }
     },
-    // HTTP Server
-    connect: {
-      server: {
-        options: {
-          port: 8822
-        }
+
+    // Browser sync and server
+    browserSync: {
+      bsFiles: {
+        src: ['<%= jshint.files %>', 'js/templates/**/*', 'styles/**/*.css', '.tmp/**/*.css']
+      },
+      options: {
+        server: {
+          baseDir: './'
+        },
+        watchTask: true,
+        port: 8822
       }
     },
+
     // Watches files for changes and performs task
     watch: {
       files: ['<%= jshint.files %>', 'styles/*.scss'],
       tasks: 'watcher'
+    },
+
+    // Testing with Qunit, connect is used for standalone testing
+    qunit: {
+      main: {
+        options: {
+          timeout: 10000,
+          urls: [
+            'http://localhost:<%= connect.server.options.port %>/tests/index.html'
+          ]
+        }
+      }
+    },
+    connect: {
+      server: {
+        options: {
+          port: 8999,
+          useAvailablePort: true
+        }
+      }
+    },
+
+    // Data from Google spreadheet
+    gss_pull: {
+      results: {
+        files: {
+          'data/results.json': ['13KCejzwiZsQ0Ke7TkfcfRwQRdWIbakyX-aLpGz6UeHU']
+        }
+      }
     }
   });
 
@@ -320,24 +407,39 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
   grunt.loadNpmTasks('grunt-contrib-cssmin');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-browser-sync');
+  grunt.loadNpmTasks('grunt-gss-pull');
   grunt.loadNpmTasks('grunt-text-replace');
   grunt.loadNpmTasks('grunt-s3');
 
-
+  // Custom task to output embed code when deploy is run, if the project is Inline
+  grunt.registerTask('inline_embed', 'Embed code generation.', function(name) {
+    grunt.log.writeln('To embed this in an article, use the following.  For full page article, copy relevant code from index-deploy.html.');
+    grunt.log.writeln('=====================================');
+    grunt.log.writeln('<div id="' + name + '-container mp"></div>');
+    grunt.log.writeln('<script type="text/javascript" src="https://s3.amazonaws.com/data.minnpost/projects/' + name + '/' + name + '.embed.latest.min.js"></script>');
+    grunt.log.writeln('=====================================');
+  });
 
   // Default build task
   grunt.registerTask('default', ['jshint', 'compass:dist', 'clean', 'replace', 'copy', 'requirejs', 'concat', 'cssmin', 'uglify']);
 
-  // Watch tasks
+  // Data tasks
+  grunt.registerTask('data', ['gss_pull']);
 
+  // Testing
+  grunt.registerTask('test', ['connect', 'qunit']);
+
+  // Watch tasks
   grunt.registerTask('watcher', ['jshint', 'compass:dev']);
-  grunt.registerTask('server', ['compass:dev', 'connect', 'watch']);
+  grunt.registerTask('server', ['jshint', 'compass:dev', 'browserSync', 'watch']);
 
 
   // Deploy tasks
-  grunt.registerTask('deploy', ['s3']);
+  grunt.registerTask('deploy', ['s3', 'inline_embed:minnpost-snow-emergency']);
 
 };

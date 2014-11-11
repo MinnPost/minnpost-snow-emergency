@@ -1,14 +1,23 @@
-node_modules/
-components/
-bower_components/
-!dist
+# Data sources and builds (except for non-dowloadable sources)
+data/original/*
+data/build/*
+# !data/original/foia-data.csv
+
+# Unnecssary dist parts
 dist/data.js
 dist/templates.js
 
+# Get around common ignores
+!dist/
+!js/build
 
 # General git ignores
+node_modules/
+components/
+bower_components/
 .sass-cache
 .tmp
+tmp/
 .DS_Store
 *.psd
 *.[oa]
