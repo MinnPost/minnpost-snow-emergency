@@ -55,6 +55,11 @@ body .noscript-note {
     *zoom: 1;
   }
 
+  sup {
+    vertical-align: super !important;
+    font-size: 0.85em;
+  }
+
   .footnote {
     font-size: .75em;
     font-style: italic;

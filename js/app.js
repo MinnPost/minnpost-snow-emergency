@@ -26,7 +26,7 @@ require([
     defaults: {
       name: 'minnpost-snow-emergency',
       el: '.minnpost-snow-emergency-container',
-      routeLastUpdate: moment('2014-02-14'),
+      routeLastUpdate: moment('2014-11-10'),
       lastSnowEmergencyDay: moment('2014-01-01'),
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please don't steal/abuse

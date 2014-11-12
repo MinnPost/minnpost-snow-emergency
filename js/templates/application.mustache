@@ -55,11 +55,11 @@
 
       {{#(nearParking !== undefined)}}
         {{#nearParking}}
-          <p>Looks like you shouldn't park here.  Check the map to be sure.</p>
+          <p>Looks like you shouldn't park here<sup>&dagger;</sup>.  Check the map for more detail.</p>
         {{/nearParking}}
 
         {{^nearParking}}
-          <p>Looks like you are clear to park here.  Check the map to be sure.</p>
+          <p>Looks like you are clear to park here<sup>&dagger;</sup>.  Check the map for more detail.</p>
         {{/nearParking}}
 
         <div class="note">And follow any other posted parking signs.</div>
@@ -73,9 +73,9 @@
 
 <div class="footnote-container">
   <div class="footnote">
-    <p>
+    <p><sup>&dagger;</sup>
       Snow plow route data provided by the City of Minneapolis, last received on {{ routeLastUpdate.format('MMM DD, YYYY') }}.
-      Data may be subject to changes and is also available from the city's <a href="http://www.ci.minneapolis.mn.us/snow/snowstreetlookup" target="_blank">Street Lookup service</a>.
+      Though we try to keep the route data up to date, it may be subject to changes.  An offical map is also available from the City's <a href="http://www.ci.minneapolis.mn.us/snow/snowstreetlookup" target="_blank">street lookup service</a>.
       MinnPost is not responsible for any traffic violations that may occur as a result of using this application.
     </p>
 
