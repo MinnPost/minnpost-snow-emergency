@@ -1,4 +1,4 @@
-/*! minnpost-snow-emergency - LATEST VERSION - 2014-11-12
+/*! minnpost-snow-emergency - v0.2.0 - 2014-11-12
 * https://github.com/minnpost/minnpost-snow-emergency
 * Copyright (c) 2014 MinnPost; Licensed MIT */
 
