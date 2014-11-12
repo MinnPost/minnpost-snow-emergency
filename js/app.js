@@ -26,13 +26,14 @@ require([
     defaults: {
       name: 'minnpost-snow-emergency',
       el: '.minnpost-snow-emergency-container',
-      lastSnowEmergencyDay: moment('2014-11-10'),
+      routeLastUpdate: moment('2014-02-14'),
+      lastSnowEmergencyDay: moment('2014-01-01'),
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
       // Please don't steal/abuse
-      mapQuestQuery: '//open.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluur20a7n0%2C8n%3Do5-9a1s9f&outFormat=json&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      mapQuestQuery: 'http://open.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluur20a7n0%2C8n%3Do5-9a1s9f&outFormat=json&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]&callback=?',
       cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
       cartoDBLayer: 'http://zzolo-minnpost.cartodb.com/api/v2/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/viz.json',
-      cartoDBTable: 'snow_routes',
+      cartoDBTable: 'snow_routes_20141110',
       defaultAccuracy: 15,
       colors: {
         day1: '#009BC2',
@@ -52,21 +53,16 @@ require([
       var thisApp = this;
       this.data = {};
 
-      // Determine some capabilities
-      this.options.isNotCapable = {
-        toUseArrays: (this.isMSIE() <= 8 && this.isMSIE() > 4)
-      };
-
       // Determine day
       this.snowEmergencyState();
 
       // Set some values for the template
+      this.data.routeLastUpdate = this.options.routeLastUpdate;
       this.data.snowEmergencyDay = this.options.snowEmergencyDay;
       this.data.isSnowEmergency = this.options.isSnowEmergency;
       this.data.lastSnowEmergencyDay = this.options.lastSnowEmergencyDay;
       this.data.snowEmergencyTitle = this.options.snowEmergencyTitle;
       this.data.snowEmergencyText = this.options.snowEmergencyText;
-      this.data.isNotCapable = this.options.isNotCapable;
       this.data.winterParkingRestriction = this.options.winterParkingRestriction;
       this.data.isLoading = false;
       this.data.nearParking = undefined;
@@ -109,12 +105,6 @@ require([
         thisApp.searchAddress(this.get('address'));
       });
 
-      // Address search
-      this.mainView.on('addressSearch', function(e) {
-        e.original.preventDefault();
-        thisApp.searchAddress(this.get('address'));
-      });
-
       // Geolocation
       this.mainView.on('geolocateSearch', function(e) {
         e.original.preventDefault();
@@ -127,6 +117,8 @@ require([
 
     // Make the map
     makeMap: function() {
+      var thisApp = this;
+
       // Initialize map
       this.map = new L.Map('snow-emergency-map', {
         center: [44.970753517451946, -93.26185335000002],
@@ -146,7 +138,7 @@ require([
         // Something
       })
       .on('error', function() {
-        this.issue('There was an error loading the snow route information.');
+        thisApp.issue('There was an error loading the snow route information.');
       });
     },
 
@@ -182,18 +174,21 @@ require([
         }
 
         // Geocode address
-        $.getJSON(this.options.mapQuestQuery.replace('[[[ADDRESS]]]', address), function(response) {
-          var latlng;
-
-          if (_.size(response.results[0].locations) > 0 &&
-            _.isObject(response.results[0].locations[0].latLng)) {
-            latlng = response.results[0].locations[0].latLng;
-            thisApp.closestRoutes(latlng.lat, latlng.lng);
-          }
-          else {
-            this.issue('That address could not be found, please try another or more specific one.');
-          }
-        });
+        $.getJSON(this.options.mapQuestQuery.replace('[[[ADDRESS]]]', encodeURIComponent(address)))
+          .done(function(response) {
+            var latlng;
+            if (_.size(response.results[0].locations) > 0 &&
+              _.isObject(response.results[0].locations[0].latLng)) {
+              latlng = response.results[0].locations[0].latLng;
+              thisApp.closestRoutes(latlng.lat, latlng.lng);
+            }
+            else {
+              thisApp.issue('That address could not be found, please try another or more specific one.');
+            }
+          })
+          .error(function() {
+            thisApp.issue('That address could not be found, please try another or more specific one.');
+          });
       }
     },
 

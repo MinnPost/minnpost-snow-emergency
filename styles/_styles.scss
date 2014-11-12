@@ -12,6 +12,15 @@ body .node-unpublished {
   background-repeat: no-repeat;
 }
 
+body .browser-upgrade-note,
+body .noscript-note {
+  margin: 1em 1em;
+  padding: 1em;
+  font-size: .75em;
+  border: 1px solid #242424;
+  background-color: #F2F2F2;
+}
+
 .interactive-container  {
   max-width: 960px;
   margin: 0 auto;

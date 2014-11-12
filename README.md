@@ -11,9 +11,14 @@ Snow emergency information given time and place.
 
 ### Import into CartoDB
 
-Data has been imported into [CartoDB](http://cartodb.com/) for it's geoquerying capabilities.  The [snow_routes](https://zzolo-minnpost.cartodb.com/tables/snow_routes/map) table holds the data and has CartoCSS and a legend set up for the application.  To update:
+Data has been imported into [CartoDB](http://cartodb.com/) for it's geoquerying capabilities.  It seems like the best way to do this is to add a new table each time.
 
-1. (coming soon)
+1. Go to the [tables](https://zzolo-minnpost.cartodb.com/dashboard/tables) interface and add a new table.  Use a `.zip` of the shapefile.
+    1. (Re)Name the table like the following with the most curent date for the data: `snow_routes_YYYYMMDD`
+    1. Tag with `snow_route`
+    1. Make public under privacy settings.
+1. Update the [visualization](https://zzolo-minnpost.cartodb.com/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/map) that holds the CartoCSS and legend with the new table:
+    1. Click on the SQL tab and change the table name to the new one from above.
 
 ## Development and running locally
 
