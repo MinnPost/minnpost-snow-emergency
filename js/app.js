@@ -26,13 +26,13 @@ require([
     defaults: {
       name: 'minnpost-snow-emergency',
       el: '.minnpost-snow-emergency-container',
-      isSnowEmergency: true,
-      snowEmergencyDay: 1,
-      lastSnowEmergencyDay: moment('2014-02-20'),
+      lastSnowEmergencyDay: moment('2014-11-10'),
       minneapolisExtent: [-93.3292, 44.8896, -93.1978, 45.0512],
-      // Please do not steal
-      mapQuestQuery: 'http://www.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluub2d01ng%2C8g%3Do5-9ua20a&outFormat=json&callback=?&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
+      // Please don't steal/abuse
+      mapQuestQuery: '//open.mapquestapi.com/geocoding/v1/address?key=Fmjtd%7Cluur20a7n0%2C8n%3Do5-9a1s9f&outFormat=json&countrycodes=us&maxResults=1&location=[[[ADDRESS]]]',
       cartoDBQuery: 'http://zzolo-minnpost.cartodb.com/api/v2/sql?format=GeoJSON&callback=?&q=[[[QUERY]]]',
+      cartoDBLayer: 'http://zzolo-minnpost.cartodb.com/api/v2/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/viz.json',
+      cartoDBTable: 'snow_routes',
       defaultAccuracy: 15,
       colors: {
         day1: '#009BC2',
@@ -87,7 +87,7 @@ require([
       this.mainView.observe('isSnowEmergency', function(n, o) {
         if (n === true) {
           // Defer just to make sure dom is ready
-          _.defer(_.bind(thisApp.makeMap(), thisApp));
+          _.defer(_.bind(thisApp.makeMap, thisApp));
         }
       }, { defer: true });
 
@@ -141,7 +141,7 @@ require([
       this.map.removeControl(this.map.attributionControl);
 
       // Add route layer
-      cartodb.createLayer(this.map, 'http://zzolo-minnpost.cartodb.com/api/v2/viz/3fb9a154-9604-11e3-b5ac-0e625a1c94a6/viz.json').addTo(this.map)
+      cartodb.createLayer(this.map, this.options.cartoDBLayer).addTo(this.map)
       .on('done', function(layer) {
         // Something
       })
@@ -219,9 +219,13 @@ require([
       this.map.setView([lat, lon], 17);
 
       // Make queryies
-      distance = 'ST_Distance(ST_SetSRID(the_geom, 4326), ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326))';
-      closestSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes ORDER BY ' + distance + ' LIMIT 1';
-      noParkingSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance + ' AS distance FROM snow_routes WHERE day' + this.data.snowEmergencyDay + ' = 0 ORDER BY ' + distance + ' LIMIT 20';
+      distance = 'ST_Distance(ST_SetSRID(the_geom, 4326), ' +
+        'ST_SetSRID(ST_MakePoint(' + lon + ', ' + lat + ') , 4326))';
+      closestSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance +
+        ' AS distance FROM ' + this.options.cartoDBTable + ' ORDER BY ' + distance + ' LIMIT 1';
+      noParkingSQL = 'SELECT the_geom, day1, day2, day3, cartodb_id, id, ' + distance +
+        ' AS distance FROM ' + this.options.cartoDBTable +
+        ' WHERE day' + this.data.snowEmergencyDay + ' = 0 ORDER BY ' + distance + ' LIMIT 20';
 
       // Get queries
       $.when(
@@ -239,6 +243,7 @@ require([
     // Show routes
     renderRoutes: function(closest, noParking) {
       var thisApp = this;
+      var nearParking;
       this.mainView.set('messages', '');
 
       // Remove any existing layers
@@ -322,10 +327,10 @@ require([
         points = {
           day1before: moment(sDay).hour(2).minute(0),
           day1start: moment(sDay).hour(21).minute(0),
-          day2start: moment(sDay).add('d', 1).hour(8).minute(0),
-          day2over: moment(sDay).add('d', 1).hour(20).minute(0),
-          day3start: moment(sDay).add('d', 2).hour(8).minute(0),
-          day3over: moment(sDay).add('d', 2).hour(20).minute(0)
+          day2start: moment(sDay).add(1, 'd').hour(8).minute(0),
+          day2over: moment(sDay).add(1, 'd').hour(20).minute(0),
+          day3start: moment(sDay).add(2, 'd').hour(8).minute(0),
+          day3over: moment(sDay).add(2, 'd').hour(20).minute(0)
         };
 
         // The last date should be within 3 days of now
