@@ -9,6 +9,14 @@ Snow emergency information given time and place.
 * Minneapolis data obtained through a DPA request, received via email, and included in this repository.  Different versions are in the in the `data` directory.
 * St. Paul data has been requested but not received yet (though it is unsure whether it will be useful since it is likely line data, not polygons).
 
+### Updating snow emergency date
+
+There is an attempt to get this automated with a scraper, but until then, the last snow emergency date needs to be manually updated:
+
+1. Update the `lastSnowEmergency` option in the `app.js` file [on or around line 30](https://github.com/MinnPost/minnpost-snow-emergency/blob/master/js/app.js#L30).
+1. Test locally (see below).
+1. Build and deploy with: `grunt && grunt deploy`
+
 ### Import into CartoDB
 
 Data has been imported into [CartoDB](http://cartodb.com/) for it's geoquerying capabilities.  It seems like the best way to do this is to add a new table each time.
